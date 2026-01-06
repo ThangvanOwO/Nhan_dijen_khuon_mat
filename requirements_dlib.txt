@@ -1,0 +1,8 @@
+# Thư viện cho face_recognition (Dlib-based)
+# Cài đặt: pip install -r requirements_dlib.txt
+
+face_recognition>=1.3.0
+dlib>=19.24.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+pillow>=10.0.0
