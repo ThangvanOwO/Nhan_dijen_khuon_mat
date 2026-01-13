@@ -1,0 +1,25 @@
+# Django Attendance System - Requirements
+# ========================================
+
+# Django Framework
+Django>=4.2,<5.0
+
+# Database - MySQL
+mysqlclient>=2.2.0
+
+# Image Processing (optional - for face images)
+Pillow>=10.0.0
+
+# Development tools
+python-dotenv>=1.0.0
+
+# OpenCV dependencies (cho plugin của anh)
+# opencv-python>=4.8.0
+# opencv-contrib-python>=4.8.0
+# numpy>=1.24.0
+# face-recognition>=1.3.0
+# dlib>=19.24.0
+
+# Optional - Production
+# gunicorn>=21.0.0
+# whitenoise>=6.5.0

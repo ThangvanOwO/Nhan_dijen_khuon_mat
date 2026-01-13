@@ -123,50 +123,137 @@ face_recognition_project/
 └── encodings.pickle        # File encodings (sau khi train)
 ```
 
-## 🎯 Hướng Dẫn Sử Dụng
+## 🎯 Hướng Dẫn Sử Dụng Từng Bước
 
-### Bước 1: Thu thập dữ liệu
+---
+
+### 📌 BƯỚC 1: Kích hoạt môi trường ảo
+
+```bash
+# Di chuyển vào thư mục dự án
+cd /home/thang/Downloads/Code/face_recognition_project
+
+# Kích hoạt virtual environment
+source venv/bin/activate
+
+# Nếu dùng fish shell:
+bash -c "source venv/bin/activate && exec fish"
+```
+
+✅ **Kiểm tra**: Đầu dòng terminal hiện `(venv)` là thành công.
+
+---
+
+### 📌 BƯỚC 2: Thu thập ảnh khuôn mặt
 
 ```bash
 python collect_faces_dlib.py
 ```
 
-- Nhập tên người cần đăng ký
-- Nhấn **SPACE** để chụp ảnh
-- Nhấn **'a'** để bật chế độ tự động
-- Thu thập **20-50 ảnh** ở nhiều góc độ
+**Khi chạy:**
+1. Nhập **tên người** cần đăng ký (VD: `nguyen_van_a`)
+2. Webcam sẽ mở lên
+3. **Chụp ảnh** bằng cách:
+   - Nhấn **SPACE** để chụp thủ công
+   - Nhấn **'a'** để bật chế độ tự động (tự chụp liên tục)
+4. Nhấn **'q'** để thoát khi đã đủ ảnh
 
-**Tips để có độ chính xác cao:**
-- Chụp ảnh ở nhiều góc: chính diện, nghiêng 15°, 30°, 45°
-- Thay đổi ánh sáng
-- Có và không có kính
-- Biểu cảm khác nhau
+**📊 Số lượng ảnh khuyến nghị:** 20-50 ảnh/người
 
-### Bước 2: Tạo encodings
+**💡 Tips để độ chính xác cao:**
+| Nên làm | Tránh |
+|---------|-------|
+| Chụp nhiều góc: 0°, 15°, 30°, 45° | Chỉ chụp 1 góc |
+| Thay đổi ánh sáng (sáng/tối) | Ánh sáng quá chói |
+| Có và không đeo kính | Che mặt |
+| Nhiều biểu cảm | Mờ, nhòe |
+
+**📁 Ảnh được lưu tại:** `dataset/<tên_người>/`
+
+---
+
+### 📌 BƯỚC 3: Tạo file encodings (Training)
 
 ```bash
 python encode_faces.py
 ```
 
-Script sẽ:
-- Đọc tất cả ảnh từ `dataset/`
-- Phát hiện khuôn mặt bằng Dlib
-- Trích xuất vector 128 chiều cho mỗi khuôn mặt
-- Lưu vào `encodings.pickle`
+**Script sẽ tự động:**
+1. ✅ Đọc tất cả ảnh từ thư mục `dataset/`
+2. ✅ Phát hiện khuôn mặt trong từng ảnh
+3. ✅ Trích xuất vector 128D cho mỗi khuôn mặt
+4. ✅ Lưu dữ liệu vào file `encodings.pickle`
 
-### Bước 3: Nhận diện thời gian thực
+**⏱️ Thời gian:** Khoảng 1-5 phút tùy số lượng ảnh
+
+**📄 Output:** File `encodings.pickle` được tạo trong thư mục gốc
+
+---
+
+### 📌 BƯỚC 4: Nhận diện khuôn mặt thời gian thực
 
 ```bash
 python recognize_video.py
 ```
 
-**Phím tắt:**
+**Khi chạy:**
+1. Webcam sẽ mở lên
+2. Hệ thống tự động nhận diện khuôn mặt
+3. Hiển thị:
+   - 🟢 **Khung xanh** + Tên: Người đã đăng ký
+   - 🔴 **Khung đỏ** + "Unknown": Người lạ
+   - Độ chính xác (%) hiển thị bên cạnh tên
+
+**⌨️ Phím tắt khi đang chạy:**
+
 | Phím | Chức năng |
 |------|-----------|
-| `q` / `ESC` | Thoát |
-| `s` | Chụp ảnh màn hình |
-| `+` | Tăng tolerance |
-| `-` | Giảm tolerance |
+| `q` hoặc `ESC` | 🚪 Thoát chương trình |
+| `s` | 📸 Chụp và lưu ảnh màn hình |
+| `d` | 🗑️ Xóa người đang nhận diện |
+| `+` hoặc `=` | ➕ Tăng tolerance (dễ nhận hơn) |
+| `-` | ➖ Giảm tolerance (nghiêm ngặt hơn) |
+
+**📊 Thông tin hiển thị trên màn hình:**
+- FPS (tốc độ xử lý)
+- Số khuôn mặt phát hiện
+- Giá trị tolerance hiện tại
+- Thời gian thực
+
+---
+
+### 📌 BƯỚC 5: Thêm người mới (Cập nhật)
+
+Khi muốn thêm người mới vào hệ thống:
+
+```bash
+# 1. Thu thập ảnh người mới
+python collect_faces_dlib.py
+
+# 2. Cập nhật encodings (chạy lại training)
+python encode_faces.py
+
+# 3. Chạy nhận diện
+python recognize_video.py
+```
+
+---
+
+### 🔄 TÓM TẮT QUY TRÌNH
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Thu thập ảnh   │ ──▶ │  Tạo encodings  │ ──▶ │   Nhận diện     │
+│ collect_faces   │     │  encode_faces   │     │ recognize_video │
+│   _dlib.py      │     │     .py         │     │     .py         │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        │                       │                       │
+        ▼                       ▼                       ▼
+   dataset/              encodings.pickle         Video Stream
+   ├── person1/                                   + Console Log
+   ├── person2/
+   └── ...
+```
 
 ## ⚙️ Tùy Chỉnh
 

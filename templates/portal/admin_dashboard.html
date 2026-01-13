@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Attendance System{% endblock %}
+
+{% block content %}
+<!-- Ambient Background Blobs -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div class="absolute top-0 -left-40 w-[600px] h-[600px] bg-primary/20 rounded-full mix-blend-screen filter blur-[100px] opacity-70 animate-blob"></div>
+    <div class="absolute -bottom-40 right-0 w-[500px] h-[500px] bg-purple-600/20 rounded-full mix-blend-screen filter blur-[100px] opacity-60 animate-blob delay-200"></div>
+</div>
+
+<!-- Top Navigation -->
+<header class="relative z-50 flex items-center justify-between px-6 py-4 lg:px-12 w-full max-w-7xl mx-auto">
+    <a href="{% url 'portal:home' %}" class="flex items-center gap-3 glass-card px-4 py-2 rounded-full hover:border-primary/30 transition-all duration-300 group">
+        <span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">arrow_back</span>
+        <span class="font-bold text-sm tracking-wide">Quay lại Trang chủ</span>
+    </a>
+    <div class="flex items-center gap-4">
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1 glass-card rounded-full">
+            <span class="material-symbols-outlined text-sm text-slate-400">schedule</span>
+            <span id="currentTime" class="text-xs font-medium text-slate-300"></span>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full">
+            <span class="material-symbols-outlined text-purple-400">admin_panel_settings</span>
+            <span class="text-xs font-medium text-purple-400 uppercase tracking-wider">Quản trị</span>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="relative z-10 flex-1 p-4 lg:p-8 overflow-y-auto" style="max-height: calc(100vh - 100px);">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">Bảng Điều Khiển Quản Trị</h1>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary">groups</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-400">Tổng sinh viên</p>
+                        <p class="text-2xl font-bold">{{ total_students }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-green-400">how_to_reg</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-400">Đã đăng ký mặt</p>
+                        <p class="text-2xl font-bold text-green-400">{{ registered_students }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-cyan-400">check_circle</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-400">Có mặt hôm nay</p>
+                        <p class="text-2xl font-bold text-cyan-400">{{ today_present }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-red-400">cancel</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-400">Vắng hôm nay</p>
+                        <p class="text-2xl font-bold text-red-400">{{ today_absent }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Records -->
+        <div class="glass-card rounded-2xl p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">history</span>
+                Lịch Sử Điểm Danh Gần Đây
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Mã SV</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Họ tên</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Ngày</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Giờ vào</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Trạng thái</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Độ tin cậy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in recent_records %}
+                        <tr class="border-b border-white/5 hover:bg-white/5">
+                            <td class="py-3 px-4 text-sm">{{ record.student.student_id }}</td>
+                            <td class="py-3 px-4 text-sm">{{ record.student.full_name }}</td>
+                            <td class="py-3 px-4 text-sm text-slate-400">{{ record.date }}</td>
+                            <td class="py-3 px-4 text-sm text-slate-400">{{ record.time_in|time:"H:i:s" }}</td>
+                            <td class="py-3 px-4 text-sm">
+                                {% if record.status == 'present' %}
+                                <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">Có mặt</span>
+                                {% elif record.status == 'late' %}
+                                <span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">Đi muộn</span>
+                                {% else %}
+                                <span class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs">Vắng</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-sm text-slate-400">{{ record.confidence|floatformat:1 }}%</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="py-8 text-center text-slate-500">Không có bản ghi nào</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Camera Status -->
+        <div class="glass-card rounded-2xl p-6">
+            <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">videocam</span>
+                Trạng Thái Camera
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% for camera in cameras %}
+                <div class="bg-slate-800/50 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-medium">{{ camera.name }}</span>
+                        {% if camera.status == 'active' %}
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        {% else %}
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-slate-400">{{ camera.location }}</p>
+                    <p class="text-xs text-slate-500 mt-1">{{ camera.camera_id }}</p>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center text-slate-500 py-4">
+                    Chưa cấu hình camera nào
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    updateTime();
+    setInterval(updateTime, 1000);
+</script>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register New Face - Attendance System{% endblock %}
+
+{% block content %}
+<!-- Ambient Background Blobs -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div class="absolute top-0 -left-40 w-[600px] h-[600px] bg-green-600/20 rounded-full mix-blend-screen filter blur-[100px] opacity-70 animate-blob"></div>
+    <div class="absolute -bottom-40 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full mix-blend-screen filter blur-[100px] opacity-60 animate-blob delay-200"></div>
+</div>
+
+<!-- Top Navigation -->
+<header class="relative z-50 flex items-center justify-between px-6 py-4 lg:px-12 w-full max-w-7xl mx-auto">
+    <a href="{% url 'portal:home' %}" class="flex items-center gap-3 glass-card px-4 py-2 rounded-full hover:border-primary/30 transition-all duration-300 group">
+        <span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">arrow_back</span>
+        <span class="font-bold text-sm tracking-wide">Quay lại Trang chủ</span>
+    </a>
+    <div class="flex items-center gap-4">
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1 glass-card rounded-full">
+            <span class="material-symbols-outlined text-sm text-slate-400">schedule</span>
+            <span id="currentTime" class="text-xs font-medium text-slate-300"></span>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+            <span class="material-symbols-outlined text-green-400">person_add</span>
+            <span class="text-xs font-medium text-green-400 uppercase tracking-wider">Đăng ký</span>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="relative z-10 flex flex-1 items-center justify-center p-4">
+    <div class="glass-card w-full max-w-2xl p-8 rounded-3xl">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-green-400 text-4xl">person_add</span>
+            </div>
+            <h1 class="text-3xl font-bold mb-2">Đăng Ký Sinh Viên Mới</h1>
+            <p class="text-slate-400">Thêm sinh viên mới vào hệ thống nhận diện khuôn mặt</p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Mã sinh viên *</label>
+                    <input type="text" name="student_id" required 
+                           class="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl focus:border-green-500/50 focus:ring-2 focus:ring-green-500/20 transition-all outline-none"
+                           placeholder="VD: SV001">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Họ và tên *</label>
+                    <input type="text" name="full_name" required 
+                           class="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl focus:border-green-500/50 focus:ring-2 focus:ring-green-500/20 transition-all outline-none"
+                           placeholder="VD: Nguyễn Văn A">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                    <input type="email" name="email" 
+                           class="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl focus:border-green-500/50 focus:ring-2 focus:ring-green-500/20 transition-all outline-none"
+                           placeholder="VD: sinhvien@email.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Lớp</label>
+                    <input type="text" name="class_name" 
+                           class="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl focus:border-green-500/50 focus:ring-2 focus:ring-green-500/20 transition-all outline-none"
+                           placeholder="VD: CNTT01">
+                </div>
+            </div>
+
+            <!-- Face Capture Section -->
+            <div class="bg-slate-800/30 rounded-2xl p-6 border border-white/10">
+                <h3 class="font-semibold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-green-400">face</span>
+                    Đăng Ký Khuôn Mặt
+                </h3>
+                <p class="text-sm text-slate-400 mb-4">
+                    Nhấn nút bên dưới để chụp khuôn mặt sử dụng plugin OpenCV.
+                    Bước này sẽ được xử lý bởi plugin tùy chỉnh của bạn.
+                </p>
+                <div class="face-scan-container mx-auto mb-4 bg-slate-800/50">
+                    <div class="face-scan-ring" style="border-top-color: #22c55e;"></div>
+                    <div class="face-scan-ring" style="border-top-color: #4ade80;"></div>
+                    <div class="face-scan-ring" style="border-top-color: #86efac;"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-6xl text-slate-600">add_a_photo</span>
+                    </div>
+                </div>
+                <button type="button" id="captureFaceBtn" 
+                        class="w-full py-3 px-6 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl font-bold hover:from-green-500 hover:to-emerald-500 transition-all duration-300 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">camera</span>
+                    Chụp Khuôn Mặt (Plugin OpenCV)
+                </button>
+                <p class="text-xs text-slate-500 mt-2 text-center">
+                    * Sẽ chuyển hướng đến plugin OpenCV để chụp khuôn mặt
+                </p>
+            </div>
+
+            <div class="flex gap-4">
+                <a href="{% url 'portal:home' %}" 
+                   class="flex-1 py-4 px-6 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold text-center transition-colors">
+                    Hủy bỏ
+                </a>
+                <button type="submit" 
+                        class="flex-1 py-4 px-6 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl font-bold hover:from-green-500 hover:to-emerald-500 transition-all duration-300">
+                    Đăng ký Sinh viên
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    document.getElementById('captureFaceBtn').addEventListener('click', function() {
+        showToast('Đang mở camera để chụp khuôn mặt...', 'info');
+        setTimeout(() => {
+            // Redirect tới OpenCV plugin với mode=register
+            window.location.href = '{{ opencv_plugin_url }}?mode=register';
+        }, 1000);
+    });
+</script>
+{% endblock %}

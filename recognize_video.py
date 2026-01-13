@@ -20,7 +20,8 @@ from config_dlib import (
     CAMERA_INDEX, FRAME_WIDTH, FRAME_HEIGHT,
     FRAME_RESIZE_SCALE, FRAME_SKIP,
     COLOR_KNOWN, COLOR_UNKNOWN, COLOR_TEXT,
-    FONT_SCALE, FONT_THICKNESS
+    FONT_SCALE, FONT_THICKNESS,
+    ENHANCE_LIGHTING, CLAHE_CLIP_LIMIT, CLAHE_TILE_SIZE
 )
 
 
@@ -42,6 +43,39 @@ class FPSCounter:
             return 0.0
         
         return (len(self.timestamps) - 1) / elapsed
+
+
+def enhance_lighting(frame):
+    """
+    Cải thiện ánh sáng cho ảnh quá sáng hoặc quá tối
+    Sử dụng CLAHE (Contrast Limited Adaptive Histogram Equalization)
+    
+    Args:
+        frame: Ảnh BGR từ OpenCV
+    
+    Returns:
+        Ảnh đã được cân bằng ánh sáng (vẫn là BGR)
+    """
+    # Chuyển sang LAB color space
+    # L = Lightness, A = Green-Red, B = Blue-Yellow
+    lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+    
+    # Tách các kênh
+    l, a, b = cv2.split(lab)
+    
+    # Áp dụng CLAHE chỉ lên kênh L (lightness)
+    # clipLimit: giới hạn contrast (2.0-3.0 thường tốt)
+    # tileGridSize: kích thước vùng xử lý
+    clahe = cv2.createCLAHE(clipLimit=CLAHE_CLIP_LIMIT, tileGridSize=CLAHE_TILE_SIZE)
+    l_enhanced = clahe.apply(l)
+    
+    # Ghép lại các kênh
+    lab_enhanced = cv2.merge([l_enhanced, a, b])
+    
+    # Chuyển về BGR
+    enhanced = cv2.cvtColor(lab_enhanced, cv2.COLOR_LAB2BGR)
+    
+    return enhanced
 
 
 def load_encodings():
@@ -167,12 +201,14 @@ def print_instructions():
     print("  - Nhấn 'd' để xóa người đang nhận diện")
     print("  - Nhấn '+' để tăng tolerance")
     print("  - Nhấn '-' để giảm tolerance")
+    print("  - Nhấn 'l' để bật/tắt cải thiện ánh sáng")
     print("-"*60)
     print(f"\nCẤU HÌNH:")
     print(f"  - Tolerance: {TOLERANCE}")
     print(f"  - Detection: {DETECTION_METHOD}")
     print(f"  - Frame scale: {FRAME_RESIZE_SCALE}")
     print(f"  - Frame skip: {FRAME_SKIP}")
+    print(f"  - Light Enhance: {'ON' if ENHANCE_LIGHTING else 'OFF'}")
     print("-"*60 + "\n")
 
 
@@ -215,6 +251,9 @@ def run_recognition():
     # Tolerance có thể điều chỉnh runtime
     current_tolerance = TOLERANCE
     
+    # Biến bật/tắt enhance lighting runtime
+    enhance_enabled = ENHANCE_LIGHTING
+    
     frame_count = 0
     
     while True:
@@ -230,8 +269,14 @@ def run_recognition():
         process_this_frame = (frame_count % FRAME_SKIP == 0)
         
         if process_this_frame:
+            # Cải thiện ánh sáng nếu được bật
+            if enhance_enabled:
+                frame_to_process = enhance_lighting(frame)
+            else:
+                frame_to_process = frame
+            
             # Resize frame để xử lý nhanh hơn
-            small_frame = cv2.resize(frame, (0, 0), fx=FRAME_RESIZE_SCALE, fy=FRAME_RESIZE_SCALE)
+            small_frame = cv2.resize(frame_to_process, (0, 0), fx=FRAME_RESIZE_SCALE, fy=FRAME_RESIZE_SCALE)
             
             # Chuyển từ BGR (OpenCV) sang RGB (face_recognition)
             rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
@@ -303,11 +348,13 @@ def run_recognition():
         fps = fps_counter.get_fps()
         
         # Hiển thị thông tin
+        enhance_status = "ON" if enhance_enabled else "OFF"
         info_lines = [
             f"FPS: {fps:.1f}",
             f"Faces: {len(face_locations)}",
             f"Tolerance: {current_tolerance:.2f}",
-            f"Method: {DETECTION_METHOD.upper()}"
+            f"Method: {DETECTION_METHOD.upper()}",
+            f"Light Enhance: {enhance_status}"
         ]
         
         y_offset = 25
@@ -352,6 +399,11 @@ def run_recognition():
         elif key == ord('-'):  # Giảm tolerance
             current_tolerance = max(current_tolerance - 0.05, 0.1)
             print(f"[INFO] Tolerance: {current_tolerance:.2f}")
+        
+        elif key == ord('l'):  # Bật/tắt enhance lighting
+            enhance_enabled = not enhance_enabled
+            status = "BẬT" if enhance_enabled else "TẮT"
+            print(f"[INFO] Cải thiện ánh sáng: {status}")
         
         elif key == ord('d'):  # Xóa người đang nhận diện
             # Tìm người đang được nhận diện (không phải Unknown)
