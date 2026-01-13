@@ -34,7 +34,7 @@
         <h1 class="text-3xl font-bold mb-8">Bảng Điều Khiển Quản Trị</h1>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <div class="glass-card rounded-2xl p-6">
                 <div class="flex items-center gap-4">
                     <div class="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -79,7 +79,173 @@
                     </div>
                 </div>
             </div>
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-purple-400">calendar_month</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-400">Tổng buổi học</p>
+                        <p class="text-2xl font-bold text-purple-400">{{ total_sessions }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Sessions List -->
+        <div class="glass-card rounded-2xl p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">event</span>
+                Danh Sách Buổi Học
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Mã buổi</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Lớp</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Buổi thứ</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Ca học</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Ngày</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Giờ</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Chủ đề</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Số HV</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Trạng thái</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in all_sessions %}
+                        <tr class="border-b border-white/5 hover:bg-white/5 {% if selected_session.id == session.id %}bg-primary/10{% endif %}">
+                            <td class="py-3 px-4 text-sm font-mono">{{ session.session_id }}</td>
+                            <td class="py-3 px-4 text-sm">
+                                <span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">{{ session.class_obj.name }}</span>
+                            </td>
+                            <td class="py-3 px-4 text-sm text-center">
+                                <span class="px-2 py-1 bg-slate-500/20 text-slate-300 rounded text-xs">{{ session.session_number }}</span>
+                            </td>
+                            <td class="py-3 px-4 text-sm">
+                                {% if session.session_type == 'morning' %}
+                                <span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">☀️ Sáng</span>
+                                {% elif session.session_type == 'afternoon' %}
+                                <span class="px-2 py-1 bg-orange-500/20 text-orange-400 rounded text-xs">🌤️ Chiều</span>
+                                {% else %}
+                                <span class="px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded text-xs">🌙 Tối</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-sm text-slate-400">{{ session.date }}</td>
+                            <td class="py-3 px-4 text-sm text-slate-400">{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</td>
+                            <td class="py-3 px-4 text-sm text-slate-300">{{ session.topic|default:"-" }}</td>
+                            <td class="py-3 px-4 text-sm text-center">
+                                <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-bold">{{ session.get_student_count }}</span>
+                            </td>
+                            <td class="py-3 px-4 text-sm">
+                                {% if session.status == 'completed' %}
+                                <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">Hoàn thành</span>
+                                {% elif session.status == 'ongoing' %}
+                                <span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">Đang diễn ra</span>
+                                {% elif session.status == 'scheduled' %}
+                                <span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">Đã lên lịch</span>
+                                {% else %}
+                                <span class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs">Đã hủy</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-sm">
+                                <a href="?session_id={{ session.id }}" 
+                                   class="px-3 py-1 bg-primary/20 text-primary hover:bg-primary/30 rounded text-xs transition-colors">
+                                    Xem chi tiết
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="py-8 text-center text-slate-500">Chưa có buổi học nào</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Session Detail (khi click vào 1 buổi) -->
+        {% if selected_session %}
+        <div class="glass-card rounded-2xl p-6 mb-8 border-2 border-primary/30">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">info</span>
+                    Chi Tiết Buổi Học: {{ selected_session.session_id }}
+                </h2>
+                <a href="{% url 'portal:admin_dashboard' %}" class="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg text-sm transition-colors">
+                    <span class="material-symbols-outlined text-sm align-middle">close</span>
+                    Đóng
+                </a>
+            </div>
+            
+            <!-- Session Info Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-slate-800/50 rounded-xl p-4">
+                    <p class="text-sm text-slate-400 mb-1">Lớp học</p>
+                    <p class="text-lg font-bold text-blue-400">{{ selected_session.class_obj.name }}</p>
+                    <p class="text-xs text-slate-500">{{ selected_session.class_obj.class_id }}</p>
+                </div>
+                <div class="bg-slate-800/50 rounded-xl p-4">
+                    <p class="text-sm text-slate-400 mb-1">Ca học</p>
+                    <p class="text-lg font-bold">
+                        {% if selected_session.session_type == 'morning' %}
+                        <span class="text-yellow-400">☀️ Buổi Sáng</span>
+                        {% elif selected_session.session_type == 'afternoon' %}
+                        <span class="text-orange-400">🌤️ Buổi Chiều</span>
+                        {% else %}
+                        <span class="text-indigo-400">🌙 Buổi Tối</span>
+                        {% endif %}
+                    </p>
+                    <p class="text-xs text-slate-500">Buổi thứ {{ selected_session.session_number }}</p>
+                </div>
+                <div class="bg-slate-800/50 rounded-xl p-4">
+                    <p class="text-sm text-slate-400 mb-1">Thời gian</p>
+                    <p class="text-lg font-bold text-cyan-400">{{ selected_session.start_time|time:"H:i" }} - {{ selected_session.end_time|time:"H:i" }}</p>
+                    <p class="text-xs text-slate-500">{{ selected_session.date }}</p>
+                </div>
+                <div class="bg-slate-800/50 rounded-xl p-4">
+                    <p class="text-sm text-slate-400 mb-1">Số học viên có mặt</p>
+                    <p class="text-lg font-bold text-green-400">{{ selected_session.get_student_count }} / {{ selected_session.class_obj.get_student_count }}</p>
+                    <p class="text-xs text-slate-500">Tỷ lệ: {{ selected_session.get_attendance_rate }}%</p>
+                </div>
+            </div>
+            
+            {% if selected_session.topic %}
+            <div class="bg-slate-800/30 rounded-xl p-4 mb-6">
+                <p class="text-sm text-slate-400 mb-1">Chủ đề buổi học</p>
+                <p class="text-white">{{ selected_session.topic }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Students List -->
+            <div class="bg-slate-800/30 rounded-xl p-4">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-green-400">person_check</span>
+                    Danh Sách Học Viên Có Mặt ({{ session_students|length }})
+                </h3>
+                {% if session_students %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {% for student in session_students %}
+                    <div class="bg-slate-700/50 rounded-lg p-3 flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-green-400">person</span>
+                        </div>
+                        <div>
+                            <p class="font-medium text-white">{{ student.full_name }}</p>
+                            <p class="text-xs text-slate-400">{{ student.student_id }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-slate-500 py-4">Chưa có học viên nào điểm danh trong buổi học này</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Recent Records -->
         <div class="glass-card rounded-2xl p-6 mb-8">
@@ -93,7 +259,7 @@
                         <tr class="border-b border-white/10">
                             <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Mã SV</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Họ tên</th>
-                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Ngày</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Buổi học</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Giờ vào</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Trạng thái</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-slate-400">Độ tin cậy</th>
@@ -104,8 +270,8 @@
                         <tr class="border-b border-white/5 hover:bg-white/5">
                             <td class="py-3 px-4 text-sm">{{ record.student.student_id }}</td>
                             <td class="py-3 px-4 text-sm">{{ record.student.full_name }}</td>
-                            <td class="py-3 px-4 text-sm text-slate-400">{{ record.date }}</td>
-                            <td class="py-3 px-4 text-sm text-slate-400">{{ record.time_in|time:"H:i:s" }}</td>
+                            <td class="py-3 px-4 text-sm text-slate-400">{{ record.session.session_id }}</td>
+                            <td class="py-3 px-4 text-sm text-slate-400">{{ record.check_in_time|time:"H:i:s" }}</td>
                             <td class="py-3 px-4 text-sm">
                                 {% if record.status == 'present' %}
                                 <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">Có mặt</span>

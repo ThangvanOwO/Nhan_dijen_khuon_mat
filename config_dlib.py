@@ -19,11 +19,11 @@ ENCODINGS_FILE = os.path.join(BASE_DIR, "encodings.pickle")
 # Ngưỡng tolerance cho face_recognition
 # Giá trị càng thấp = càng nghiêm ngặt (ít false positive)
 # Giá trị càng cao = càng dễ dãi (ít false negative)
-# Khuyến nghị: 0.4 - 0.6
-# - 0.4: Rất nghiêm ngặt, phù hợp bảo mật cao
-# - 0.5: Cân bằng (khuyến nghị)
-# - 0.6: Dễ dãi hơn, phù hợp khi cần nhận diện ở nhiều điều kiện
-TOLERANCE = 0.5
+# Khuyến nghị: 0.3 - 0.5
+# - 0.3: Rất nghiêm ngặt, phù hợp bảo mật cao
+# - 0.35: Cân bằng (khuyến nghị)
+# - 0.5: Dễ dãi hơn, phù hợp khi cần nhận diện ở nhiều điều kiện
+TOLERANCE = 0.35
 
 # Phương pháp phát hiện khuôn mặt
 # - "hog": Nhanh hơn, dùng CPU (khuyến nghị cho máy không có GPU)

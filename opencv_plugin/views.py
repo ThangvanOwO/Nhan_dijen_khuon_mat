@@ -44,7 +44,8 @@ class FaceRecognitionCamera:
         self.face_confidences = []
         self.current_tolerance = TOLERANCE
         self.enhance_enabled = ENHANCE_LIGHTING
-        self.last_recognized = {}  # Lưu người đã nhận diện để tránh spam
+        self.last_recognized = {}  # Lưu người đã nhận diện để tránh spam (30s gần đây)
+        self.session_recognized = {}  # Lưu TẤT CẢ người đã nhận diện trong cả session
         
         # Load encodings
         self._load_encodings()
@@ -151,6 +152,11 @@ class FaceRecognitionCamera:
                 # Lưu người đã nhận diện (tránh spam)
                 if name != "Unknown":
                     now = datetime.now()
+                    # Lưu vào session_recognized (giữ suốt session)
+                    if name not in self.session_recognized:
+                        self.session_recognized[name] = now
+                    
+                    # Lưu vào last_recognized (chỉ 30s gần đây, để hiển thị UI)
                     if name not in self.last_recognized or \
                        (now - self.last_recognized[name]).seconds > 5:
                         self.last_recognized[name] = now
@@ -348,54 +354,132 @@ def get_all_recognized(request):
 def end_session(request):
     """
     API kết thúc phiên điểm danh
-    - Lưu tất cả người đã nhận diện vào database
+    - Tạo/lấy Session (buổi học) cho ngày hôm nay
+    - Lưu tất cả người đã nhận diện vào bảng Attendance
     - Dừng camera
     - Trả về danh sách đã lưu
+    
+    Ưu tiên: Session (buổi) → Class (lớp) → Student (học viên)
     """
     import json
     from django.utils import timezone
-    from portal.models import Student, AttendanceRecord
+    from portal.models import Class, Student, Session, Attendance
     
     cam = get_camera()
     
     saved_records = []
     errors = []
-    today = timezone.now().date()
+    now = timezone.now()
+    today = now.date()
+    current_time = now.time()
     
-    for name, rec_time in cam.last_recognized.items():
+    # Lấy thông tin lớp và buổi học từ request (nếu có)
+    try:
+        data = json.loads(request.body) if request.body else {}
+    except:
+        data = {}
+    
+    class_id = data.get('class_id', 'DEFAULT')
+    session_type = data.get('session_type', 'morning')  # morning, afternoon, evening
+    session_number = int(data.get('session_number', 1))
+    session_topic = data.get('topic', '')
+    
+    # Map session_type sang tên tiếng Việt
+    session_type_names = {
+        'morning': 'Buổi sáng',
+        'afternoon': 'Buổi chiều',
+        'evening': 'Buổi tối'
+    }
+    session_type_name = session_type_names.get(session_type, 'Buổi học')
+    
+    # Tạo topic nếu không có
+    if not session_topic:
+        session_topic = f"{session_type_name} - Buổi {session_number}"
+    
+    # 1. Tìm hoặc tạo Lớp học (Class)
+    class_obj, class_created = Class.objects.get_or_create(
+        class_id=class_id,
+        defaults={
+            'name': f'Lớp {class_id}',
+            'description': 'Lớp học tự động tạo từ hệ thống điểm danh',
+            'is_active': True
+        }
+    )
+    
+    # 2. Tạo Session ID theo format: LOP_NGAY_BUOI_SO
+    session_id = f"{class_id}_{today.strftime('%Y%m%d')}_{session_type}_{session_number}"
+    
+    # Tìm session đã có với cùng ID (cùng lớp, ngày, buổi, số thứ tự)
+    existing_session = Session.objects.filter(session_id=session_id).first()
+    
+    if existing_session:
+        session = existing_session
+        session.status = 'completed'
+        session.end_time = current_time
+        session.session_number = session_number
+        session.session_type = session_type
+        session.save()
+    else:
+        session = Session.objects.create(
+            session_id=session_id,
+            class_obj=class_obj,
+            session_number=session_number,
+            session_type=session_type,
+            date=today,
+            start_time=current_time,
+            end_time=current_time,
+            topic=session_topic,
+            status='completed',
+            notes=f"Loại: {session_type_name}, Buổi số: {session_number}"
+        )
+    
+    # 3. Lưu điểm danh cho từng người đã nhận diện trong session
+    # Sử dụng session_recognized (lưu tất cả người trong cả session) thay vì last_recognized
+    people_to_save = cam.session_recognized if cam.session_recognized else cam.last_recognized
+    
+    for name, rec_time in people_to_save.items():
         try:
-            # Tìm hoặc tạo sinh viên
-            student, created = Student.objects.get_or_create(
+            # Tìm hoặc tạo Student
+            student, student_created = Student.objects.get_or_create(
                 student_id=name,
                 defaults={
                     'full_name': name,
+                    'class_obj': class_obj,
+                    'face_data': f'dataset/{name}/',
                     'is_registered': True
                 }
             )
             
-            # Tạo bản ghi điểm danh
-            record, rec_created = AttendanceRecord.objects.get_or_create(
+            # Nếu student chưa có lớp, gán vào lớp hiện tại
+            if not student.class_obj:
+                student.class_obj = class_obj
+                student.save()
+            
+            # Tạo bản ghi điểm danh (Attendance)
+            attendance, att_created = Attendance.objects.get_or_create(
+                session=session,
                 student=student,
-                date=today,
                 defaults={
-                    'time_in': rec_time.time(),
                     'status': 'present',
-                    'confidence': 95.0,  # Giá trị mặc định
+                    'check_in_time': rec_time.time(),
+                    'confidence': 95.0,
                     'camera_id': 'CAM01'
                 }
             )
             
-            if not rec_created:
-                # Đã điểm danh rồi, cập nhật time_out
-                record.time_out = rec_time.time()
-                record.save()
+            if not att_created:
+                # Đã điểm danh rồi, cập nhật check_out_time
+                attendance.check_out_time = rec_time.time()
+                attendance.save()
             
             saved_records.append({
                 'name': name,
                 'student_id': student.student_id,
-                'time_in': record.time_in.strftime('%H:%M:%S') if record.time_in else None,
-                'status': record.status,
-                'created': rec_created
+                'class_name': class_obj.name,
+                'session_id': session.session_id,
+                'check_in': attendance.check_in_time.strftime('%H:%M:%S') if attendance.check_in_time else None,
+                'status': attendance.status,
+                'created': att_created
             })
             
         except Exception as e:
@@ -404,9 +488,11 @@ def end_session(request):
                 'error': str(e)
             })
     
-    # Dừng camera
+    # Dừng camera và reset session
     global camera
     if camera is not None:
+        camera.session_recognized = {}  # Reset session data
+        camera.last_recognized = {}
         camera.stop()
         camera = None
     
@@ -414,6 +500,13 @@ def end_session(request):
         'success': True,
         'message': f'Đã lưu {len(saved_records)} bản ghi điểm danh',
         'date': str(today),
+        'session': {
+            'id': session.session_id,
+            'class': class_obj.name,
+            'topic': session.topic,
+            'attendance_count': session.get_attendance_count(),
+            'attendance_rate': session.get_attendance_rate()
+        },
         'saved': saved_records,
         'errors': errors
     })
