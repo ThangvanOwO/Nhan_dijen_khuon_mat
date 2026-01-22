@@ -121,11 +121,28 @@
     setInterval(updateTime, 1000);
 
     document.getElementById('captureFaceBtn').addEventListener('click', function() {
-        showToast('Đang mở camera để chụp khuôn mặt...', 'info');
+        // Lấy thông tin đã nhập
+        const studentId = document.querySelector('input[name="student_id"]').value.trim();
+        const fullName = document.querySelector('input[name="full_name"]').value.trim();
+        const email = document.querySelector('input[name="email"]').value.trim();
+        const className = document.querySelector('input[name="class_name"]').value.trim();
+        
+        // Tạo URL với query params
+        let url = '{% url "opencv_plugin:register_camera" %}';
+        const params = new URLSearchParams();
+        if (studentId) params.append('student_id', studentId);
+        if (fullName) params.append('full_name', fullName);
+        if (email) params.append('email', email);
+        if (className) params.append('class_id', className);
+        
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
+        
+        showToast('Đang chuyển đến trang thu thập khuôn mặt...', 'info');
         setTimeout(() => {
-            // Redirect tới OpenCV plugin với mode=register
-            window.location.href = '{{ opencv_plugin_url }}?mode=register';
-        }, 1000);
+            window.location.href = url;
+        }, 300);
     });
 </script>
 {% endblock %}

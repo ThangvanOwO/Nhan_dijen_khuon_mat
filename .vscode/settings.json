@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^/home/thang/Downloads/Code/face_recognition_project/\\.venv/bin/pip install setuptools wheel && /home/thang/Downloads/Code/face_recognition_project/\\.venv/bin/pip install git\\+https://github\\.com/ageitgey/face_recognition_models$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

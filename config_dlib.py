@@ -27,8 +27,8 @@ TOLERANCE = 0.35
 
 # Phương pháp phát hiện khuôn mặt
 # - "hog": Nhanh hơn, dùng CPU (khuyến nghị cho máy không có GPU)
-# - "cnn": Chính xác hơn, cần GPU (CUDA)
-DETECTION_METHOD = "cnn"  # Đã bật GPU!
+# - "cnn": Chính xác hơn, cần GPU (CUDA) - dlib phải build với CUDA
+DETECTION_METHOD = "hog"  # HOG vì dlib không có CUDA
 
 # Model encoding
 # - "small": 5 điểm landmark, nhanh hơn
@@ -45,7 +45,7 @@ NUM_JITTERS_TRAINING = 10
 # Index của camera (0 = camera mặc định)
 CAMERA_INDEX = 0
 
-# Kích thước frame hiển thị (tăng để nhận diện xa tốt hơn)
+# Kích thước frame hiển thị
 FRAME_WIDTH = 1280
 FRAME_HEIGHT = 720
 
@@ -53,7 +53,7 @@ FRAME_HEIGHT = 720
 # - 0.25: Nhanh nhưng chỉ nhận diện gần
 # - 0.5: Cân bằng, nhận diện xa tốt hơn (khuyến nghị)
 # - 1.0: Chậm nhất, nhận diện xa nhất
-FRAME_RESIZE_SCALE = 0.35
+FRAME_RESIZE_SCALE = 0.5
 
 # Số frame skip giữa các lần detect (tăng = nhanh hơn nhưng ít mượt)
 FRAME_SKIP = 3
@@ -63,7 +63,7 @@ FRAME_SKIP = 3
 # Bật/tắt cải thiện ánh sáng (CLAHE)
 # True: Tự động cân bằng ánh sáng (tốt cho môi trường sáng/tối không đều)
 # False: Tắt (nhanh hơn, phù hợp khi ánh sáng ổn định)
-ENHANCE_LIGHTING = True
+ENHANCE_LIGHTING = False
 
 # CLAHE clip limit (2.0 - 4.0)
 # Giá trị cao hơn = contrast mạnh hơn

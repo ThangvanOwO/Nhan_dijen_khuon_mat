@@ -137,4 +137,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Cấu hình URL cho plugin OpenCV
 OPENCV_PLUGIN_URL = '/camera/'  # URL tới camera nhận diện
 ADMIN_DASHBOARD_URL = '/admin-dashboard/'
-REGISTER_FACE_URL = '/register/'
+REGISTER_FACE_URL = '/camera/register/'  # Đổi sang trang register camera trực tiếp
